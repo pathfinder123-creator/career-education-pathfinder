@@ -337,18 +337,25 @@
   .pathway-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:14px;margin:8px 0 28px;}
   .pathway-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
   .pathway-card h3{font-size:17px;margin-bottom:6px;}.pathway-card p{font-size:13.5px;color:var(--slate);margin:0 0 8px;}
-  .finder-shell{background:#fff8e5;border:1px solid #ead79d;border-radius:18px;padding:28px;margin-top:14px;}
+  .finder-shell{display:grid;gap:16px;margin-top:14px;}
+  .finder-step{border:1px solid var(--line);border-radius:18px;padding:26px;}
+  .finder-step-one{background:#f2f6fc;border-color:#cfdaec;}
+  .finder-step-two{background:#fff8e5;border-color:#ead79d;}
+  .finder-step-three{background:#f6f3f8;border-color:#ddd4e5;}
+  .finder-step-head{margin-bottom:16px;}
+  .finder-step-head h3{font-size:19px;margin:7px 0 4px;}
+  .finder-step-head p{font-size:13px;color:var(--slate);margin:0;line-height:1.5;}
+  .finder-step-label{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--navy);color:#fff;border-radius:999px;padding:5px 9px;}
   .finder-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
   .field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
   .field input,.field select{width:100%;padding:12px;border:1.5px solid #cfd4dd;border-radius:9px;font:inherit;background:#fff;}
   .finder-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
   .finder-actions .btn{background:var(--navy);color:#fff;padding:11px 18px;}.finder-actions .btn.alt{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
-  .finder-transition{margin:26px 0 14px;padding-top:22px;border-top:1px solid #dfcf9e;font-size:14px;font-weight:700;color:var(--navy);}
   .school-tools{display:none;margin-top:24px}.school-tools.visible{display:block;}
   .resource-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:14px;}
   .resource-link{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;font-weight:600;font-size:13.5px;}
   .finder-note{font-size:12.5px;color:var(--slate);margin-top:14px;}
-  .ai-review{margin-top:22px;padding-top:22px;border-top:1px solid #dfcf9e;}
+  .ai-review{margin-top:0;}
   .ai-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
   .ai-review-head h3{font-size:18px;margin:0 0 5px;}
   .ai-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--navy);color:#fff;border-radius:999px;padding:5px 9px;}
@@ -506,20 +513,28 @@
       <div class="subhead">Find schools and investigate your options</div>
       <div class="subnote">Find institutions near you, then build focused links for researching a school you select.</div>
       <div class="finder-shell">
-        <div class="finder-grid">
-          <div class="field"><label for="locationInput">ZIP code or city and state</label><input id="locationInput" placeholder="e.g. 75098 or Wylie, TX"></div>
-        </div>
-        <div class="finder-actions"><button class="btn" type="button" id="findSchoolsBtn">Find nearby schools</button></div>
-        <p class="finder-transition">Found a school you want to explore? Enter it below.</p>
-        <div class="finder-grid">
-          <div class="field"><label for="schoolNameInput">Selected school name</label><input id="schoolNameInput" placeholder="Enter a school you found"></div>
-          <div class="field"><label for="schoolUrlInput">School website (optional)</label><input id="schoolUrlInput" placeholder="e.g. example.edu"></div>
-        </div>
-        <div class="finder-actions"><button class="btn alt" type="button" id="buildSchoolLinksBtn">Search matching programs</button></div>
-        <div id="schoolTools" class="school-tools"><h3 id="schoolToolsTitle">Research this school</h3><div id="resourceLinks" class="resource-links"></div><p class="finder-note" id="schoolToolsNote">Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.</p></div>
-        <div class="ai-review" id="aiReviewSection">
+        <section class="finder-step finder-step-one" aria-labelledby="finderStepOneTitle">
+          <div class="finder-step-head"><span class="finder-step-label">Step 1</span><h3 id="finderStepOneTitle">Find a nearby school</h3><p>Enter a location, then use the map or an official school directory.</p></div>
+          <div class="finder-grid">
+            <div class="field"><label for="locationInput">ZIP code or city and state</label><input id="locationInput" placeholder="e.g. 75098 or Wylie, TX"></div>
+          </div>
+          <div class="finder-actions"><button class="btn" type="button" id="findSchoolsBtn">Find nearby schools</button></div>
+          <div id="nearbySchoolTools" class="school-tools"><h3 data-school-tools-title>School finders</h3><div class="resource-links" data-resource-links></div><p class="finder-note" data-school-tools-note></p></div>
+        </section>
+
+        <section class="finder-step finder-step-two" aria-labelledby="finderStepTwoTitle">
+          <div class="finder-step-head"><span class="finder-step-label">Step 2</span><h3 id="finderStepTwoTitle">Explore a school's programs</h3><p>Found a school you want to explore? Enter its name or website below.</p></div>
+          <div class="finder-grid">
+            <div class="field"><label for="schoolNameInput">Selected school name</label><input id="schoolNameInput" placeholder="Enter a school you found"></div>
+            <div class="field"><label for="schoolUrlInput">School website (optional)</label><input id="schoolUrlInput" placeholder="e.g. example.edu"></div>
+          </div>
+          <div class="finder-actions"><button class="btn alt" type="button" id="buildSchoolLinksBtn">Search matching programs</button></div>
+          <div id="schoolTools" class="school-tools"><h3 data-school-tools-title>Research this school</h3><div class="resource-links" data-resource-links></div><p class="finder-note" data-school-tools-note>Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.</p></div>
+        </section>
+
+        <section class="finder-step finder-step-three ai-review" id="aiReviewSection" aria-labelledby="finderStepThreeTitle">
           <div class="ai-review-head">
-            <div><h3>Review one official school webpage</h3><p class="finder-note" style="margin:0;">Use AI to compare what the page actually says with one occupation you selected. This is a focused page review—not a guarantee that a program is offered or that it meets licensing requirements.</p></div>
+            <div><span class="finder-step-label">Step 3</span><h3 id="finderStepThreeTitle">Review a specific program page</h3><p class="finder-note" style="margin:0;">Use AI to compare what the page actually says with one occupation you selected. This is a focused page review—not a guarantee that a program is offered or that it meets licensing requirements.</p></div>
             <span class="ai-badge">Optional AI review</span>
           </div>
           <div class="ai-review-grid">
@@ -528,7 +543,7 @@
           </div>
           <div class="ai-actions"><button class="btn" type="button" id="reviewSchoolBtn">Review this page</button><span class="ai-status" id="aiReviewStatus" role="status" aria-live="polite"></span></div>
           <div class="ai-report" id="aiReport" aria-live="polite"></div>
-        </div>
+        </section>
       </div>
     </div>
 
@@ -1146,20 +1161,21 @@ function selectedProgramTerms(){
   return terms.length ? terms.join(' OR ') : 'academic programs';
 }
 
-function showResourceLinks(title, links, note){
-  document.getElementById('schoolToolsTitle').textContent = title;
-  document.getElementById('resourceLinks').innerHTML = links.map(link =>
+function showResourceLinks(containerId, title, links, note){
+  const container = document.getElementById(containerId);
+  container.querySelector('[data-school-tools-title]').textContent = title;
+  container.querySelector('[data-resource-links]').innerHTML = links.map(link =>
     `<a class="resource-link" href="${link.url}" target="_blank" rel="noopener">${link.label} &rarr;</a>`
   ).join('');
-  if(note) document.getElementById('schoolToolsNote').textContent = note;
-  document.getElementById('schoolTools').classList.add('visible');
+  if(note) container.querySelector('[data-school-tools-note]').textContent = note;
+  container.classList.add('visible');
 }
 
 function findNearbySchools(){
   const location = document.getElementById('locationInput').value.trim();
   if(!location){ document.getElementById('locationInput').focus(); return; }
   const mapQuery = encodeURIComponent(`colleges universities technical schools near ${location}`);
-  showResourceLinks(`School finders for ${location}`, [
+  showResourceLinks('nearbySchoolTools', `School finders for ${location}`, [
     {label:`View nearby schools on a map`,url:`https://www.google.com/maps/search/?api=1&query=${mapQuery}`},
     {label:`College Scorecard — official school data`,url:`https://collegescorecard.ed.gov/`},
     {label:`NCES College Navigator — official directory`,url:`https://nces.ed.gov/collegenavigator/`}
@@ -1184,7 +1200,7 @@ function buildSchoolResearchLinks(){
     {label:'Career counseling or services',url:search('career counseling career services appointment')},
     {label:'Admissions and contact information',url:search('admissions contact request information')}
   );
-  showResourceLinks(`Research ${schoolTerm}`, links, 'Choose a specific official program or catalog page whenever possible. Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.');
+  showResourceLinks('schoolTools', `Research ${schoolTerm}`, links, 'Choose a specific official program or catalog page whenever possible. Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.');
 }
 
 const AI_REVIEW_ENDPOINT = window.PATHFINDER_AI_ENDPOINT || 'https://career-education-pathfinder-review.daniels75040.workers.dev/';
@@ -1272,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     codeInput.value = "";
     codeGoBtn.disabled = true;
     document.getElementById('codeError').textContent = "";
+    document.getElementById('nearbySchoolTools').classList.remove('visible');
     document.getElementById('schoolTools').classList.remove('visible');
     document.getElementById('assessment').scrollIntoView({behavior:'smooth'});
   });
