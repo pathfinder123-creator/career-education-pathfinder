@@ -517,7 +517,7 @@
           <div class="field"><label for="schoolUrlInput">School website (optional)</label><input id="schoolUrlInput" placeholder="e.g. example.edu"></div>
         </div>
         <div class="finder-actions"><button class="btn alt" type="button" id="buildSchoolLinksBtn">Search matching programs</button></div>
-        <div id="schoolTools" class="school-tools"><h3 id="schoolToolsTitle">Research this school</h3><div id="resourceLinks" class="resource-links"></div><p class="finder-note">Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.</p></div>
+        <div id="schoolTools" class="school-tools"><h3 id="schoolToolsTitle">Research this school</h3><div id="resourceLinks" class="resource-links"></div><p class="finder-note" id="schoolToolsNote">Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.</p></div>
         <div class="ai-review" id="aiReviewSection">
           <div class="ai-review-head">
             <div><h3>Review one official school webpage</h3><p class="finder-note" style="margin:0;">Use AI to compare what the page actually says with one occupation you selected. This is a focused page review—not a guarantee that a program is offered or that it meets licensing requirements.</p></div>
@@ -1147,11 +1147,12 @@ function selectedProgramTerms(){
   return terms.length ? terms.join(' OR ') : 'academic programs';
 }
 
-function showResourceLinks(title, links){
+function showResourceLinks(title, links, note){
   document.getElementById('schoolToolsTitle').textContent = title;
   document.getElementById('resourceLinks').innerHTML = links.map(link =>
     `<a class="resource-link" href="${link.url}" target="_blank" rel="noopener">${link.label} &rarr;</a>`
   ).join('');
+  if(note) document.getElementById('schoolToolsNote').textContent = note;
   document.getElementById('schoolTools').classList.add('visible');
 }
 
@@ -1159,13 +1160,14 @@ function findNearbySchools(){
   const location = document.getElementById('locationInput').value.trim();
   const radius = document.getElementById('radiusSelect').value;
   if(!location){ document.getElementById('locationInput').focus(); return; }
-  const loc = encodeURIComponent(location);
-  const query = encodeURIComponent(`colleges universities technical schools near ${location}`);
+  const mapQuery = encodeURIComponent(`colleges universities technical schools near ${location}`);
+  const webQuery = encodeURIComponent(`colleges universities technical schools within ${radius} miles of ${location}`);
   showResourceLinks(`School finders for ${location}`, [
-    {label:`College Scorecard school search`,url:`https://collegescorecard.ed.gov/search/?distance=${radius}&zip=${loc}`},
-    {label:`NCES College Navigator`,url:`https://nces.ed.gov/collegenavigator/?q=&s=all&zc=${loc}&zd=${radius}`},
-    {label:`View schools on a map`,url:`https://www.google.com/maps/search/?api=1&query=${query}`}
-  ]);
+    {label:`View nearby schools on a map`,url:`https://www.google.com/maps/search/?api=1&query=${mapQuery}`},
+    {label:`Search the web for schools within ${radius} miles`,url:`https://www.google.com/search?q=${webQuery}`},
+    {label:`College Scorecard — official school data`,url:`https://collegescorecard.ed.gov/`},
+    {label:`NCES College Navigator — official directory`,url:`https://nces.ed.gov/collegenavigator/`}
+  ], 'Start with the map or web search to identify nearby schools. The federal directories provide official comparison data but may occasionally be unavailable and may ask you to enter a five-digit ZIP code.');
 }
 
 function buildSchoolResearchLinks(){
@@ -1186,7 +1188,7 @@ function buildSchoolResearchLinks(){
     {label:'Career counseling or services',url:search('career counseling career services appointment')},
     {label:'Admissions and contact information',url:search('admissions contact request information')}
   );
-  showResourceLinks(`Research ${schoolTerm}`, links);
+  showResourceLinks(`Research ${schoolTerm}`, links, 'Choose a specific official program or catalog page whenever possible. Confirm program availability, admission requirements, licensing preparation, delivery format, and appointment options directly with the institution.');
 }
 
 const AI_REVIEW_ENDPOINT = window.PATHFINDER_AI_ENDPOINT || 'https://career-education-pathfinder-review.daniels75040.workers.dev/';
