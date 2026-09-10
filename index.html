@@ -508,7 +508,6 @@
       <div class="finder-shell">
         <div class="finder-grid">
           <div class="field"><label for="locationInput">ZIP code or city and state</label><input id="locationInput" placeholder="e.g. 75098 or Wylie, TX"></div>
-          <div class="field"><label for="radiusSelect">Search radius</label><select id="radiusSelect"><option value="25">25 miles</option><option value="50" selected>50 miles</option><option value="100">100 miles</option><option value="250">250 miles</option></select></div>
         </div>
         <div class="finder-actions"><button class="btn" type="button" id="findSchoolsBtn">Find nearby schools</button></div>
         <p class="finder-transition">Found a school you want to explore? Enter it below.</p>
@@ -1158,16 +1157,13 @@ function showResourceLinks(title, links, note){
 
 function findNearbySchools(){
   const location = document.getElementById('locationInput').value.trim();
-  const radius = document.getElementById('radiusSelect').value;
   if(!location){ document.getElementById('locationInput').focus(); return; }
   const mapQuery = encodeURIComponent(`colleges universities technical schools near ${location}`);
-  const webQuery = encodeURIComponent(`colleges universities technical schools within ${radius} miles of ${location}`);
   showResourceLinks(`School finders for ${location}`, [
     {label:`View nearby schools on a map`,url:`https://www.google.com/maps/search/?api=1&query=${mapQuery}`},
-    {label:`Search the web for schools within ${radius} miles`,url:`https://www.google.com/search?q=${webQuery}`},
     {label:`College Scorecard — official school data`,url:`https://collegescorecard.ed.gov/`},
     {label:`NCES College Navigator — official directory`,url:`https://nces.ed.gov/collegenavigator/`}
-  ], 'Start with the map or web search to identify nearby schools. The federal directories provide official comparison data but may occasionally be unavailable and may ask you to enter a five-digit ZIP code.');
+  ], 'Start with the map to identify nearby schools, then zoom in or out to adjust the search area. The federal directories provide official comparison data but may occasionally be unavailable and may ask you to enter a five-digit ZIP code.');
 }
 
 function buildSchoolResearchLinks(){
