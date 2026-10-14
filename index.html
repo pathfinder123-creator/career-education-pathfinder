@@ -370,6 +370,8 @@
   .ai-actions .btn{background:var(--gold);color:#17213a;}
   .ai-status{font-size:13px;color:var(--slate);min-height:20px;}
   .ai-status.error{color:#9d1c2c;font-weight:600;}
+  .ai-verification{margin-top:14px;min-height:65px;}
+  .ai-usage-note{font-size:12.5px;color:var(--slate);margin:8px 0 0;max-width:72ch;}
   .ai-report{display:none;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;}
   .ai-report.visible{display:block;}
   .ai-report h4{font-size:17px;margin:0 0 8px;}
@@ -408,6 +410,7 @@
     .ai-review-grid{grid-template-columns:1fr;}
   }
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -549,6 +552,8 @@
             <div class="field"><label for="aiOccupationSelect">Occupation to investigate</label><select id="aiOccupationSelect"><option value="">Select an occupation above first</option></select></div>
             <div class="field"><label for="aiPageUrlInput">Official program, catalog, advising, or career-services page</label><input id="aiPageUrlInput" type="url" inputmode="url" placeholder="https://www.example.edu/program-page"></div>
           </div>
+          <div class="ai-verification"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFWsVtyQU-FQ7Ci4" data-theme="light" data-size="flexible"></div></div>
+          <p class="ai-usage-note">Three new AI page reviews are available per browser each day. Previously reviewed page-and-occupation combinations may be shown from the 30-day cache and do not count against that allowance. The assessment itself and all school-research links remain available without AI.</p>
           <div class="ai-actions"><button class="btn" type="button" id="reviewSchoolBtn">Review this page</button><span class="ai-status" id="aiReviewStatus" role="status" aria-live="polite"></span></div>
           <div class="ai-report" id="aiReport" aria-live="polite"></div>
         </section>
@@ -1304,6 +1309,29 @@ function buildSchoolResearchLinks(){
 
 const AI_REVIEW_ENDPOINT = window.PATHFINDER_AI_ENDPOINT || 'https://career-education-pathfinder-review.daniels75040.workers.dev/';
 
+function pathfinderVisitorId(){
+  const key = 'pathfinder_ai_visitor_id';
+  try{
+    let value = localStorage.getItem(key);
+    if(!value){
+      value = crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'') : `${Date.now()}_${Math.random().toString(36).slice(2)}_${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(key,value);
+    }
+    return value;
+  }catch{
+    return `${Date.now()}_${Math.random().toString(36).slice(2)}_${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function turnstileToken(){
+  try { return window.turnstile ? window.turnstile.getResponse() : ''; }
+  catch { return ''; }
+}
+
+function resetTurnstile(){
+  try { if(window.turnstile) window.turnstile.reset(); } catch { /* widget may not be ready */ }
+}
+
 function alignmentClass(label){
   const text = String(label || '').toLowerCase();
   if(text.includes('strong')) return 'strong';
@@ -1319,6 +1347,7 @@ function renderAiReport(data){
   const confirmations = Array.isArray(data.needs_confirmation) ? data.needs_confirmation : [];
   report.innerHTML = `
     <h4>${escapeHtml(data.school_name || 'School-page review')}</h4>
+    ${data.cached ? `<p class="finder-note"><strong>Saved review:</strong> This result was retrieved from a recent review of the same page and occupation.</p>` : ''}
     <div class="ai-summary">${escapeHtml(data.summary || 'The reviewed page did not provide enough information for a summary.')}</div>
     ${findings.map(item => `<div class="ai-finding"><div class="ai-finding-title"><strong>${escapeHtml(item.program_name || 'Program or pathway')}</strong><span class="alignment-tag ${alignmentClass(item.alignment)}">${escapeHtml(item.alignment || 'Not demonstrated')}</span></div><p>${escapeHtml(item.explanation || '')}</p>${item.evidence ? `<p><strong>Page evidence:</strong> ${escapeHtml(item.evidence)}</p>` : ''}</div>`).join('')}
     ${data.credential_considerations ? `<div class="ai-finding"><strong>Credential or licensure considerations</strong><p>${escapeHtml(data.credential_considerations)}</p></div>` : ''}
@@ -1337,6 +1366,8 @@ async function reviewSchoolPage(){
   document.getElementById('aiReport').classList.remove('visible');
   if(!occupation){ status.textContent = 'Select an occupation above, then choose it here.'; status.classList.add('error'); return; }
   if(!/^https:\/\//i.test(pageUrl)){ status.textContent = 'Enter a complete https:// webpage address from the school.'; status.classList.add('error'); return; }
+  const verificationToken = turnstileToken();
+  if(!verificationToken){ status.textContent = 'Please complete the verification before requesting the review.'; status.classList.add('error'); return; }
   if(!AI_REVIEW_ENDPOINT){
     status.textContent = 'AI review is not connected yet. The school research links above remain available.';
     status.classList.add('error');
@@ -1345,15 +1376,15 @@ async function reviewSchoolPage(){
   button.disabled = true;
   status.textContent = 'Reviewing the official page…';
   try{
-    const response = await fetch(AI_REVIEW_ENDPOINT, {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({occupation,page_url:pageUrl,school_name:document.getElementById('schoolNameInput').value.trim(),pathways:selectedProgramTerms().split(' OR ').slice(0,6)})});
+    const response = await fetch(AI_REVIEW_ENDPOINT, {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({occupation,page_url:pageUrl,school_name:document.getElementById('schoolNameInput').value.trim(),pathways:selectedProgramTerms().split(' OR ').slice(0,6),visitor_id:pathfinderVisitorId(),turnstile_token:verificationToken})});
     const data = await response.json().catch(() => ({}));
     if(!response.ok) throw new Error(data.error || 'The page could not be reviewed.');
     renderAiReport(data);
-    status.textContent = 'Review complete. Confirm important details with the school.';
+    status.textContent = data.cached ? 'Saved review loaded. Confirm current details with the school.' : 'Review complete. Confirm important details with the school.';
   }catch(error){
     status.textContent = `${error.message || 'Review unavailable.'} Use the school research links above to continue.`;
     status.classList.add('error');
-  }finally{ button.disabled = false; }
+  }finally{ button.disabled = false; resetTurnstile(); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
