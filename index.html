@@ -498,7 +498,7 @@
 
     <div style="margin-bottom:40px;">
       <div class="subhead">Occupations to explore</div>
-      <div class="subnote">Tap a role to view it on My Next Move. Select up to three occupations to populate your possible education pathways.</div>
+      <div class="subnote">Tap a role to view it on My Next Move. Matches are based only on your ordered interest results: your first two areas lead the list, and your third area broadens it. Select up to three occupations to populate possible education pathways.</div>
       <div class="occ-list" id="occList"></div>
       <div class="occ-pager" id="occPager" hidden><button class="occ-page-btn" type="button" id="occBackBtn">Back</button><span class="occ-page-status" id="occPageStatus"></span><button class="occ-page-btn" type="button" id="occMoreBtn">More occupations</button></div>
       <p class="occ-disclaimer">These are examples of matching occupations, not an exhaustive list.</p>
@@ -1015,20 +1015,40 @@ function escapeHtml(value){
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
 
-function balancedOccupationMatches(primaryCode, secondaryCode){
-  const lists = [primaryCode, secondaryCode].map(code => OCCUPATIONS[code].map(item => ({...item, code})));
+function institutionNeutralOccupationMatches(primaryCode, secondaryCode, tertiaryCode){
+  const primary = OCCUPATIONS[primaryCode].map(item => ({...item, code:primaryCode, matchTier:'strong'}));
+  const secondary = OCCUPATIONS[secondaryCode].map(item => ({...item, code:secondaryCode, matchTier:'strong'}));
+  const tertiary = OCCUPATIONS[tertiaryCode].map(item => ({...item, code:tertiaryCode, matchTier:'related'}));
   const matches = [];
   const seen = new Set();
-  const longest = Math.max(...lists.map(list => list.length));
-  for(let index = 0; index < longest && matches.length < 20; index++){
-    lists.forEach(list => {
+
+  // The first 14 positions balance the two strongest interests. The final six
+  // broaden exploration using the third interest, without reference to any
+  // college's program inventory.
+  for(let index = 0; index < 7; index++){
+    [primary, secondary].forEach(list => {
       const item = list[index];
-      if(item && !seen.has(item.name) && matches.length < 20){
+      if(item && !seen.has(item.name)){
         seen.add(item.name);
         matches.push(item);
       }
     });
   }
+
+  tertiary.slice(0,6).forEach(item => {
+    if(!seen.has(item.name)){
+      seen.add(item.name);
+      matches.push(item);
+    }
+  });
+
+  // Defensive fill for any future duplicate names across interest lists.
+  [primary, secondary, tertiary].flat().forEach(item => {
+    if(matches.length < 20 && !seen.has(item.name)){
+      seen.add(item.name);
+      matches.push(item);
+    }
+  });
   return matches;
 }
 
@@ -1091,10 +1111,11 @@ function renderResults(scores, ranked){
     TYPE_META[top3[0]].name + " / " + TYPE_META[top3[1]].name +
     " \u2014 " + (CLUSTER_LABELS[top3[0]+top3[1]] || (TYPE_META[top3[0]].name + " & " + TYPE_META[top3[1]].name));
 
-  // Occupations alternate between the two strongest interest areas so both
-  // are represented on each page. Show up to 20 in two groups of 10.
+  // Occupations are determined only by the ordered RIASEC results. The first
+  // two interests lead the list; six expanded positions use the third interest.
+  // School and program information does not influence occupation matching.
   selectedOccupations.clear();
-  occupationResults = balancedOccupationMatches(top3[0], top3[1]);
+  occupationResults = institutionNeutralOccupationMatches(top3[0], top3[1], top3[2]);
   occupationPage = 0;
   renderOccupationPage();
 
