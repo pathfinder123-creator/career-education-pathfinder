@@ -418,6 +418,21 @@
     .results-hero .rtext{text-align:left;}
     .ai-review-grid{grid-template-columns:1fr;}
   }
+
+  /* RIASEC interest-code explanations */
+  .interest-explanations{margin:0 0 32px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;}
+  .interest-explanations h3{font-size:20px;margin:0 0 6px;}
+  .interest-explanations>p{color:var(--slate);font-size:14px;margin:0 0 14px;}
+  .interest-explanations details{border:1px solid var(--line);border-radius:10px;margin:9px 0;overflow:hidden;background:#fff;}
+  .interest-explanations summary{cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 15px;list-style:none;}
+  .interest-explanations summary::-webkit-details-marker{display:none;}
+  .interest-explanations summary::after{content:'+';margin-left:auto;color:var(--navy);font-size:21px;font-weight:600;}
+  .interest-explanations details[open] summary::after{content:'−';}
+  .interest-explanations .interest-letter{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0;}
+  .interest-explanations .interest-heading{display:flex;flex-direction:column;line-height:1.35;}
+  .interest-explanations .interest-heading small{color:var(--slate);font-size:12px;margin-top:3px;}
+  .interest-explanations .interest-description{padding:0 16px 15px 60px;font-size:14px;line-height:1.65;}
+  @media(max-width:640px){.interest-explanations{padding:16px}.interest-explanations .interest-description{padding-left:15px;}}
 </style>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -503,6 +518,12 @@
         <div class="code-badges" id="codeBadges"></div>
         <div class="cluster-name" id="clusterName"></div>
       </div>
+    </div>
+
+    <div id="interestExplanations" class="interest-explanations" aria-label="Your interest categories">
+      <h3>Explore your interest categories</h3>
+      <p>Your interest code highlights types of activities you enjoy and ways you may prefer to engage your intelligence. Select each category to learn more.</p>
+      <div id="interestExplanationList"></div>
     </div>
 
     <div style="margin-bottom:40px;">
@@ -1179,7 +1200,45 @@ function changeOccupationPage(direction){
   document.getElementById('occList').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-function renderResults(scores, ranked){
+
+const INTEREST_EXPLANATIONS = {
+  R: {intelligence:'Practical Intelligence', description:'You enjoy working with your hands, being outdoors, using tools, and operating machinery. You have a natural interest in how things work and a knack for building, handling, and fixing things. Your practical intelligence helps you solve problems through hands-on activity and produce useful, tangible results.'},
+  I: {intelligence:'Analytical Intelligence', description:'You enjoy asking questions, exploring ideas, gathering information, and figuring out why things happen. You are curious about how the world works and like solving problems that require careful thought and investigation. Your analytical intelligence helps you recognize patterns, evaluate evidence, and discover explanations and solutions.'},
+  A: {intelligence:'Creative Intelligence', description:'You enjoy imagining possibilities, expressing ideas, designing, and creating something original. You appreciate opportunities to use your imagination and explore different ways of seeing or doing things. Your creative intelligence helps you recognize possibilities, develop fresh ideas, and bring imagination into meaningful expression.'},
+  S: {intelligence:'Relational Intelligence', description:'You enjoy helping, teaching, encouraging, and working with other people. You are interested in understanding people’s needs, building relationships, and making a positive difference in their lives. Your relational intelligence helps you connect with others, communicate with understanding, and support their learning, growth, and well-being.'},
+  E: {intelligence:'Strategic Intelligence', description:'You enjoy taking initiative, influencing others, leading activities, and turning ideas into action. You are drawn to opportunities to make decisions, pursue goals, and inspire others to work toward a shared purpose. Your strategic intelligence helps you recognize opportunities, anticipate possibilities, and manage people and resources to achieve results.'},
+  C: {intelligence:'Organizing Intelligence', description:'You enjoy organizing information, managing details, following procedures, and keeping things running smoothly. You appreciate accuracy, consistency, and creating order out of complexity. Your organizing intelligence helps you recognize structure, develop reliable systems, and manage information and activities with care and efficiency.'}
+};
+function renderInterestExplanations(codes){
+  const list = document.getElementById('interestExplanationList');
+  list.replaceChildren();
+  codes.forEach(code => {
+    const info = INTEREST_EXPLANATIONS[code];
+    if(!info) return;
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const letter = document.createElement('span');
+    letter.className = 'interest-letter';
+    letter.style.background = TYPE_META[code].hex;
+    if(code === 'A') letter.style.color = '#171E2B';
+    letter.textContent = code;
+    const heading = document.createElement('span');
+    heading.className = 'interest-heading';
+    const name = document.createElement('strong');
+    name.textContent = TYPE_META[code].name;
+    const subtitle = document.createElement('small');
+    subtitle.textContent = info.intelligence;
+    heading.append(name,subtitle);
+    summary.append(letter,heading);
+    const description = document.createElement('div');
+    description.className = 'interest-description';
+    description.textContent = info.description;
+    details.append(summary,description);
+    list.append(details);
+  });
+}
+
+function renderResults(scores, ranked, displayedCodes = ranked.slice(0,3)){
   const top3 = ranked.slice(0,3);
 
   drawHexOverlay(document.getElementById('resultHex'), scores);
@@ -1192,6 +1251,8 @@ function renderResults(scores, ranked){
   document.getElementById('clusterName').textContent =
     TYPE_META[top3[0]].name + " / " + TYPE_META[top3[1]].name +
     " \u2014 " + (CLUSTER_LABELS[top3[0]+top3[1]] || (TYPE_META[top3[0]].name + " & " + TYPE_META[top3[1]].name));
+
+  renderInterestExplanations(displayedCodes);
 
   // Occupations are determined only by the ordered RIASEC results. The three
   // sets progress from full-code matches to the top-two combination and then
@@ -1238,7 +1299,7 @@ function showResultsFromCode(){
   HEX_ORDER.forEach(c => scores[c] = 2);
   letters.forEach((c, i) => scores[c] = weights[i] ?? 6);
 
-  renderResults(scores, ranked);
+  renderResults(scores, ranked, letters);
 }
 
 /* ---------- Save / Send as PDF ----------
